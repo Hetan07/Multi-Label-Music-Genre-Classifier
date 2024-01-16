@@ -110,6 +110,7 @@ fields_df = ['Chromagram Short-Time Fourier Transform (Chroma-STFT)',
 
 url_single_label = "https://huggingface.co/spaces/Hetan07/Single_Label_Music_Genre_Classifier"
 url_github = "https://github.com/Hetan07/Multi-Label-Music-Genre-Classifier"
+url_docs = "https://librosa.org/doc/latest/index.html"
 
 st.title("Multi-Label Music Genre Classifier")
 st.write("A multi-label music genre classifier based on the extension of my previous [project](%s). "
@@ -189,7 +190,8 @@ if uploaded_file is not None:
 
     st.write("The given audio sample is processed using the librosa library to get the features extracted used by the "
              "models for genre prediction. Following is the dataframe with each of the feature extracted and "
-             "corresponding mean and variance of the feature")
+             "corresponding mean and variance of the feature. The docs of [*librosa*](%s) library can be referred for a more "
+             "indepth explanation and implementation specifics." % url_docs)
 
     col3, col4 = st.columns([0.55, 0.45])
     # Features Dataframe
