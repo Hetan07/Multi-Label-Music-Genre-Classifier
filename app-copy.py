@@ -1,50 +1,49 @@
-import streamlit as st
 import joblib
 import pandas as pd
-import numpy as np
-import xgboost
+import streamlit as st
 import tensorflow
 from keras.losses import binary_crossentropy
 from keras.optimizers import Adam
-from tensorflow import keras
-from keras.models import load_model
 
+import audio_splitting
 # Local Imports
 import feature_extraction
-import audio_splitting
 
 st.set_page_config(layout="wide")
 
 
-def display(model_name):
+def display(model_name,col2):
     xgb_multi_class_names = ["Rock", "Rap & Hip-Hop", "Soul", "Classical", "Dance & Electronic", "Blues", "Jazz",
                              "Country", "Bebop", "Folk", "Reggae", "R&B", "Punk", "Metal", "Pop"]
-
+    # if you are interested to know why there are two different lists at the same time, the order of genres in which
+    # xgb was trained and others were trained are different
     xmulti_class_names = ["Metal", "Blues", "Reggae", "Jazz", "Rock", "Folk", "Classical", "Dance & Electronic",
                           "Punk", "Bebop", "Pop", "R&B", "Country", "Rap & Hip-Hop", "Soul"]
 
     if model_name == "XGB - (Multi Label)":
-        # Predict labels for the input features
         predicted_indices = model.predict(reshaped_features)
-        print(predicted_indices)
         predicted_labels = []
         for i in range(0, len(predicted_indices[0])):
             if predicted_indices[0][i] == 1.0:
                 predicted_labels.append(xgb_multi_class_names[i])
         if predicted_labels:
-            st.write(f"Predicted Genres: {', '.join(predicted_labels)}")
+            labels = ', '.join(predicted_labels)
+            with col2:
+                st.metric(f"Predicted Genres: ",labels,label_visibility='collapsed')
         else:
-            st.write("No genres predicted for this input.")
-    if model_name == "XGB Classifier - (Single Label)":
+            with col2:
+                st.caption("No genres predicted for this input.")
+
+    elif model_name == "XGB Classifier - (Single Label)":
         predicted_indices = model.predict(reshaped_features)
         predicted_labels = [class_indices[i] for i in predicted_indices]
-        st.write(f"Predicted Genre: {predicted_labels[0]}")
+        with col2:
+            st.metric("Predicted Genre:", str(predicted_labels[0]), label_visibility="collapsed")
+
     elif model_name == "Convolutional Recurrent Neural Network - (Multi Label)" \
             or model_name == "Neural Network - (Multi Label)" \
             or model_name == "Batch Normalization - (Multi Label)":
         predicted_probabilities = model.predict(reshaped_features)
-
-        # Set a threshold for class prediction (e.g., 0.5)
         threshold = 0.3
         print(predicted_probabilities)
         probabilities = []
@@ -61,14 +60,21 @@ def display(model_name):
                              enumerate(xmulti_class_names)]
 
         if predicted_labels:
-            st.write(f"All probabilities are:")
-            st.write(probabilities)
-            st.write(f"Predicted Genres: {', '.join(predicted_labels)}")
+            with col2:
+                st.metric(f"Predicted Genres:",str(', '.join(predicted_labels)))
+                st.caption("Below is a list of the probability of the sample being classified into each genre. Any "
+                           "probability value below the threshold value (=0.35) is interpreted as the sample not being of "
+                           "that genre ")
+                df = pd.DataFrame(probabilities,columns=["Genre","Probabilities"])
+                st.dataframe(df,hide_index=True,use_container_width=True)
         else:
             st.write("No genre predicted above the threshold.")
+
     else:
         predicted_label = model.predict(reshaped_features)[0]
-        st.write(f"Predicted Genre: {predicted_label}")
+        with col2:
+            st.metric("Predicted Genres:", str(predicted_label).capitalize(), label_visibility="collapsed")
+
 
 # Vars
 fields_df = ['Chromagram Short-Time Fourier Transform (Chroma-STFT)',
@@ -107,29 +113,31 @@ url_github = "https://github.com/Hetan07/Multi-Label-Music-Genre-Classifier"
 st.title("Multi-Label Music Genre Classifier")
 st.write("A multi-label music genre classifier based on the extension of my previous [project](%s). "
          "The source files have been provided both on HuggingFace and on [Github](%s). "
-         "Dataset had to be created specifically, as none was available and is also available. "
+         "Dataset had to be created specifically, as none was available with the features and multi-labels tags for "
+         "each audio."
          "All the models have been trained on the created dataset." % (url_single_label, url_github))
 
 st.divider()
-st.subheader('Dataset Creation')
+st.subheader('On Dataset Creation')
 
-s = 'The work done for creating the dataset were\n' \
-    '- Downloading the appropriate songs taken randomly from the MuMu dataset in sampled manner from ~80 genres (' \
-    'tags)\n' \
-    '- Data Cleaning which included to clean and replace the download songs as many of them were things such as album ' \
-    'intros, interludes or skits\n' \
-    '- There were also issues where the song required was not available on any platform and so had to appropriately ' \
-    'replaced for another proper track or I had to manually search and download\n' \
-    '- Each file had to properly checked to prevent any distortion or disturbances\n' \
-    '- Applying feature extraction on each downloaded song using the librosa library\n' \
-    '- Reducing the labels from ~80 to around ~15\n' \
-    'In the end I decided to have feature extraction work on 3 second samples and thus have around ~24000 samples.' \
-    'I have linked the actual dataset created from all the steps if anyone wishes to work upon it further\n'
+with st.expander("See explanation"):
+    s = 'The work done for creating the dataset were\n' \
+        '- Downloading the appropriate songs taken randomly from the MuMu dataset in sampled manner from ~80 genres (' \
+        'tags)\n' \
+        '- Data Cleaning which included to clean and replace the download songs as many of them were things such as album ' \
+        'intros, interludes or skits\n' \
+        '- There were also issues where the song required was not available on any platform and so had to appropriately ' \
+        'replaced for another proper track or I had to manually search and download\n' \
+        '- Each file had to properly checked to prevent any distortion or disturbances\n' \
+        '- Applying feature extraction on each downloaded song using the librosa library\n' \
+        '- Reducing the labels from ~80 to around ~15\n' \
+        '\nIn the end I decided to have feature extraction work on 3 second samples and thus have around ~24000 samples. ' \
+        'I have linked the actual dataset created from all the steps if anyone wishes to work upon it further\n'
 
-st.markdown(s)
+    st.markdown(s)
 st.divider()
 
-st.write("Prediction of following genres")
+st.subheader("Prediction of following genres")
 
 multi_class_names = ["Bebop", "Blues", "Classical", "Country", "Dance & Electronic", "Folk", "Jazz", "Metal",
                      "Pop", "Punk", "R&B", "Rap & Hip-Hop", "Reggae", "Rock", "Soul"]
@@ -182,67 +190,63 @@ if uploaded_file is not None:
              "corresponding mean and variance of the feature")
 
     col3, col4 = st.columns([0.55, 0.45])
-    with col3:
+    # Features Dataframe
+    df = pd.DataFrame({
+        "name": fields_df,
+        "Mean": feature_copy[2::2],
+        "Variance": feature_copy[3::2]
+    })
 
-        # Features Dataframe
-        df = pd.DataFrame({
-            "name": fields_df,
-            "Mean": feature_copy[2::2],
-            "Variance": feature_copy[3::2]
-        })
+    st.dataframe(
+        df,
+        column_config={
+            "name": "Features",
+            "Mean": "Mean of Feature",
+            "Variance": "Variance of Feature"
+        },
+        use_container_width=True
+    )
+    st.caption("Note: Harmonic and Percussion values generally have mean in the power of -1e5 or -1e6 and thus "
+               "are represented as 0.\nAlso, for the feature 'tempo' variance has not been added to keep up with the "
+               "consistency as presented in the original GTZAN dataset")
 
-        st.dataframe(
-            df,
-            column_config={
-                "name": "Features",
-                "Mean": "Mean of Feature",
-                "Variance": "Variance of Feature"
-            },
-            use_container_width=True
-        )
-        st.caption("Note: Harmonic and Percussion values generally have mean in the power of -1e5 or -1e6 and thus "
-                   "are represented as 0.\nAlso, for the feature 'tempo' variance has not been added to keep up with the "
-                   "consistency as presented in the original GTZAN dataset")
-    with col4:
+    st.divider()
 
-        col1, col2 = st.columns([0.50, 0.50])
+    col1, col2 = st.columns([0.45, 0.55])
 
-        col1.subheader("Select a model")
-        with col1:
-            model_name = st.selectbox("Select a model", all_models, label_visibility="collapsed")
+    col1.subheader("Select a model")
+    with col1:
+        model_name = st.selectbox("Select a model", all_models, label_visibility="collapsed")
 
-            if model_name == "K-Nearest Neighbors - (Single Label)":
-                model = joblib.load("./models/knn.pkl")
-            elif model_name == "Logistic Regression - (Single Label)":
-                model = joblib.load("./models/logistic.pkl")
-            elif model_name == "Support Vector Machines - (Single Label)":
-                model = joblib.load("./models/svm.pkl")
-            elif model_name == "Neural Network - (Single Label)":
-                model = joblib.load("./models/nn.pkl")
-            elif model_name == "XGB Classifier - (Single Label)":
-                model = joblib.load("./models/xgb.pkl")
-            elif model_name == "XGB - (Multi Label)":
-                model = joblib.load("./models/xgb_mlb.pkl")
-            elif model_name == "Convolutional Recurrent Neural Network - (Multi Label)":
-                model = tensorflow.keras.models.load_model("./models/model_crnn1.h5", compile=False)
-                model.compile(loss=binary_crossentropy,
-                              optimizer=Adam(),
-                              metrics=['accuracy'])
-            elif model_name == "Neural Network - (Multi Label)":
-                model = tensorflow.keras.models.load_model("./models/model_nn.h5", compile=False)
-                model.compile(loss=binary_crossentropy,
-                              optimizer=Adam(),
-                              metrics=['accuracy'])
-            elif model_name == "Batch Normalization - (Multi Label)":
-                model = tensorflow.keras.models.load_model("./models/model_bn.h5", compile=False)
-                model.compile(loss=binary_crossentropy,
-                              optimizer=Adam(),
-                              metrics=['accuracy'])
-        col2.subheader("Predicted genre")
+        if model_name == "K-Nearest Neighbors - (Single Label)":
+            model = joblib.load("./models/knn.pkl")
+        elif model_name == "Logistic Regression - (Single Label)":
+            model = joblib.load("./models/logistic.pkl")
+        elif model_name == "Support Vector Machines - (Single Label)":
+            model = joblib.load("./models/svm.pkl")
+        elif model_name == "Neural Network - (Single Label)":
+            model = joblib.load("./models/nn.pkl")
+        elif model_name == "XGB Classifier - (Single Label)":
+            model = joblib.load("./models/xgb.pkl")
+        elif model_name == "XGB - (Multi Label)":
+            model = joblib.load("./models/xgb_mlb.pkl")
+        elif model_name == "Convolutional Recurrent Neural Network - (Multi Label)":
+            model = tensorflow.keras.models.load_model("./models/model_crnn1.h5", compile=False)
+            model.compile(loss=binary_crossentropy,
+                          optimizer=Adam(),
+                          metrics=['accuracy'])
+        elif model_name == "Neural Network - (Multi Label)":
+            model = tensorflow.keras.models.load_model("./models/model_nn.h5", compile=False)
+            model.compile(loss=binary_crossentropy,
+                          optimizer=Adam(),
+                          metrics=['accuracy'])
+        elif model_name == "Neural Network with Batch Normalization - (Multi Label)":
+            model = tensorflow.keras.models.load_model("./models/model_bn.h5", compile=False)
+            model.compile(loss=binary_crossentropy,
+                          optimizer=Adam(),
+                          metrics=['accuracy'])
+    col2.subheader("Predicted genre")
 
-        # Reshape the features to match the expected shape for prediction
-        reshaped_features = features.reshape(1, -1)
-        display(model_name)
-
-
-
+    # Reshape the features to match the expected shape for prediction
+    reshaped_features = features.reshape(1, -1)
+    display(model_name,col2)
