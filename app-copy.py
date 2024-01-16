@@ -42,6 +42,7 @@ def display(model_name,col2):
 
     elif model_name == "Convolutional Recurrent Neural Network - (Multi Label)" \
             or model_name == "Neural Network - (Multi Label)" \
+            or model_name == "Convolutional Neural Network - (Multi Label)" \
             or model_name == "Batch Normalization - (Multi Label)":
         predicted_probabilities = model.predict(reshaped_features)
         threshold = 0.3
@@ -174,6 +175,7 @@ if uploaded_file is not None:
                   "Neural Network - (Single Label)",
                   "XGB Classifier - (Single Label)",
                   "Convolutional Recurrent Neural Network - (Multi Label)",
+                  "Convolutional Neural Network - (Multi Label)",
                   "XGB - (Multi Label)",
                   "Neural Network - (Multi Label)",
                   "Neural Network with Batch Normalization - (Multi Label)"]
@@ -242,6 +244,11 @@ if uploaded_file is not None:
                           metrics=['accuracy'])
         elif model_name == "Neural Network with Batch Normalization - (Multi Label)":
             model = tensorflow.keras.models.load_model("./models/model_bn.h5", compile=False)
+            model.compile(loss=binary_crossentropy,
+                          optimizer=Adam(),
+                          metrics=['accuracy'])
+        elif model_name == "Convolutional Neural Network - (Multi Label)":
+            model = tensorflow.keras.models.load_model("./models/model_cnn.h5",compile=False)
             model.compile(loss=binary_crossentropy,
                           optimizer=Adam(),
                           metrics=['accuracy'])
