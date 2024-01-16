@@ -200,7 +200,9 @@ if uploaded_file is not None:
             },
             use_container_width=True
         )
-
+        st.caption("Note: Harmonic and Percussion values generally have mean in the power of -1e5 or -1e6 and thus "
+                   "are represented as 0.\nAlso, for the feature 'tempo' variance has not been added to keep up with the "
+                   "consistency as presented in the original GTZAN dataset")
     with col4:
 
         col1, col2 = st.columns([0.50, 0.50])

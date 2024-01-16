@@ -45,8 +45,6 @@ def all_feature_extraction(audio_path, sample_rate=22050):
     data_list.append(chroma_stft_mean)
     data_list.append(chroma_stft_var)
 
-    print(data_list,val_field)
-
     # 2. RMS
     rms = librosa.feature.rms(y=audio_df)
     rms_mean = np.mean(rms)
