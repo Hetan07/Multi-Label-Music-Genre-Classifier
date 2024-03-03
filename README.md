@@ -66,5 +66,4 @@ I have also deployed this on Hugging Face using streamlit. If one wishes, he can
 
 ---
 
-All of this took me around 3-4 days but in retrospect, I realize that some parts have been slightly rushed. 
 An in-depth analysis of data is further required along with more data. This task as a lot of potential for beginners and experts alike
